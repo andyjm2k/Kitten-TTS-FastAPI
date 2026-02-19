@@ -1,0 +1,30 @@
+version: '3.8'
+
+# Docker Compose file with API Key authentication enabled
+# Usage: docker-compose -f docker-compose.api-key.yml up -d
+
+services:
+  kitten-tts:
+    build: .
+    container_name: kitten-tts-secure
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - MODEL_NAME=KittenML/kitten-tts-mini-0.8
+      # API Key is required for all /v1/* endpoints
+      - API_KEY=${API_KEY:-sk-kitten-tts-secret-key}
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  hf-cache:
+    name: kitten-tts-hf-cache-secure

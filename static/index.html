@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitten TTS - Text to Speech</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .audio-player {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .audio-player.show {
+            display: block;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.loading {
+            display: block;
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .api-key-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .api-key-section details {
+            cursor: pointer;
+        }
+
+        .voice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .voice-option {
+            padding: 10px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .voice-option:hover {
+            border-color: #667eea;
+            background: #eef2ff;
+        }
+
+        .voice-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .format-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .format-option {
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .format-option:hover {
+            border-color: #667eea;
+        }
+
+        .format-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin: 5px 0;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐱 Kitten TTS</h1>
+        <p class="subtitle">High-quality Text-to-Speech powered by KittenML</p>
+
+        <div class="api-key-section">
+            <details>
+                <summary><strong>⚙️ API Configuration (Optional)</strong></summary>
+                <div style="margin-top: 15px;">
+                    <div class="form-group">
+                        <label for="apiKey">API Key (if required by server)</label>
+                        <input type="text" id="apiKey" placeholder="Enter your API key">
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <div class="form-group">
+            <label for="text">Text to Convert</label>
+            <textarea id="text" placeholder="Enter the text you want to convert to speech..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Voice Selection</label>
+            <div class="voice-grid" id="voiceGrid">
+                <!-- Voices will be loaded dynamically -->
+            </div>
+            <input type="hidden" id="voice" value="Jasper">
+        </div>
+
+        <div class="form-group">
+            <label>Audio Format</label>
+            <div class="format-options">
+                <div class="format-option selected" data-format="mp3">MP3</div>
+                <div class="format-option" data-format="wav">WAV</div>
+                <div class="format-option" data-format="opus">Opus</div>
+                <div class="format-option" data-format="flac">FLAC</div>
+            </div>
+            <input type="hidden" id="format" value="mp3">
+        </div>
+
+        <button class="btn" id="generateBtn" onclick="generateSpeech()">
+            🔊 Generate Speech
+        </button>
+
+        <div class="status" id="status"></div>
+
+        <div class="audio-player" id="audioPlayer">
+            <label>Generated Audio:</label>
+            <audio id="audio" controls></audio>
+            <div style="margin-top: 15px;">
+                <a id="downloadLink" class="btn" style="display: inline-block; width: auto; padding: 10px 20px; text-decoration: none;" download="speech.mp3">
+                    ⬇️ Download
+                </a>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3>ℹ️ About Kitten TTS</h3>
+            <ul>
+                <li><strong>Model Size:</strong> ~79MB (80M parameters)</li>
+                <li><strong>Architecture:</strong> StyleTTS 2</li>
+                <li><strong>Available Voices:</strong> Bella, Jasper, Luna, Bruno, Rosie, Hugo, Kiki, Leo</li>
+                <li><strong>No GPU Required:</strong> Works on CPU!</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Voice options
+        const voices = ['Bella', 'Jasper', 'Luna', 'Bruno', 'Rosie', 'Hugo', 'Kiki', 'Leo'];
+        
+        // Initialize voice grid
+        function initVoiceGrid() {
+            const voiceGrid = document.getElementById('voiceGrid');
+            voiceGrid.innerHTML = voices.map(voice => `
+                <div class="voice-option ${voice === 'Jasper' ? 'selected' : ''}" 
+                     onclick="selectVoice('${voice}')">
+                    ${voice}
+                </div>
+            `).join('');
+        }
+
+        // Select voice
+        function selectVoice(voice) {
+            document.getElementById('voice').value = voice;
+            document.querySelectorAll('.voice-option').forEach(el => {
+                el.classList.remove('selected');
+                if (el.textContent.trim() === voice) {
+                    el.classList.add('selected');
+                }
+            });
+        }
+
+        // Select format
+        function selectFormat(format) {
+            document.getElementById('format').value = format;
+            document.querySelectorAll('.format-option').forEach(el => {
+                el.classList.remove('selected');
+                if (el.dataset.format === format) {
+                    el.classList.add('selected');
+                }
+            });
+        }
+
+        // Add event listeners for format selection
+        document.querySelectorAll('.format-option').forEach(option => {
+            option.addEventListener('click', () => {
+                selectFormat(option.dataset.format);
+            });
+        });
+
+        // Show status message
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+
+        // Hide status
+        function hideStatus() {
+            document.getElementById('status').className = 'status';
+        }
+
+        // Generate speech
+        async function generateSpeech() {
+            const text = document.getElementById('text').value.trim();
+            const voice = document.getElementById('voice').value;
+            const format = document.getElementById('format').value;
+            const apiKey = document.getElementById('apiKey').value.trim();
+
+            if (!text) {
+                showStatus('Please enter some text to convert!', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Generating...';
+            hideStatus();
+
+            try {
+                const headers = {
+                    'Content-Type': 'application/json',
+                };
+
+                if (apiKey) {
+                    headers['Authorization'] = `Bearer ${apiKey}`;
+                }
+
+                const response = await fetch('/v1/audio/speech', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                        model: 'kitten-tts-mini-0.8',
+                        input: text,
+                        voice: voice,
+                        response_format: format
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to generate speech');
+                }
+
+                // Create blob from response
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+
+                // Update audio player
+                const audio = document.getElementById('audio');
+                audio.src = url;
+
+                const downloadLink = document.getElementById('downloadLink');
+                downloadLink.href = url;
+                downloadLink.download = `speech.${format}`;
+
+                document.getElementById('audioPlayer').classList.add('show');
+                showStatus('Speech generated successfully! 🎉', 'success');
+
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔊 Generate Speech';
+            }
+        }
+
+        // Initialize on load
+        initVoiceGrid();
+    </script>
+</body>
+</html>
