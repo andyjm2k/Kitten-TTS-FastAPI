@@ -12,9 +12,11 @@ A high-quality, lightweight text-to-speech solution powered by [KittenTTS](https
 - **🎙️ Multiple Voices**: 8 different voice options
 - **📦 Multiple Formats**: MP3, WAV, Opus, FLAC support
 
-## 🚀 Quick Start
+## 🚀 Quick Start - Choose Your Method
 
-### Option 1: Docker Compose (Recommended)
+### Method 1: Docker Compose (Recommended) ⭐
+
+The easiest and most consistent way to run Kitten TTS.
 
 #### Without API Key (Development)
 
@@ -32,9 +34,38 @@ export API_KEY="your-secret-api-key"
 docker-compose -f docker-compose.api-key.yml up -d
 ```
 
-Access the WebUI at: http://localhost:8000
+**Access the WebUI:** http://localhost:8000
 
-### Option 2: Manual Installation
+**View logs:** `docker-compose logs -f`  
+**Stop:** `docker-compose down`
+
+---
+
+### Method 2: Startup Script (Smart Auto-Detect) 🤖
+
+The `start.sh` script automatically detects if Docker is available and chooses the best method.
+
+```bash
+# Make executable (first time only)
+chmod +x start.sh
+
+# Run the script
+./start.sh
+```
+
+**What it does:**
+- If Docker is available → Uses Docker Compose
+- If Docker is not available → Sets up Python virtual environment and runs locally
+- Automatically creates `.env` file if missing
+- Handles API key configuration
+
+**Access the WebUI:** http://localhost:8000
+
+---
+
+### Method 3: Direct Python Execution 🐍
+
+Run directly with Python without Docker.
 
 ```bash
 # Install dependencies
@@ -47,6 +78,39 @@ pip install https://github.com/KittenML/KittenTTS/releases/download/0.8/kittentt
 python app.py
 ```
 
+**With API Key:**
+```bash
+export API_KEY="your-secret-key"
+python app.py
+```
+
+**Access the WebUI:** http://localhost:8000
+
+**Stop:** Press `Ctrl+C`
+
+---
+
+### Method 4: Web UI Only (Static Files) 🌐
+
+If you just want to serve the WebUI and connect to a remote Kitten TTS API:
+
+```bash
+# Using Python's built-in HTTP server
+cd static
+python -m http.server 3000
+
+# Or using Node.js http-server
+npm install -g http-server
+cd static
+http-server -p 3000
+```
+
+Then edit `static/index.html` to change the API endpoint from `/v1/audio/speech` to your remote server URL (e.g., `https://tts.yourdomain.com/v1/audio/speech`).
+
+**Access the WebUI:** http://localhost:3000
+
+---
+
 ## 🔧 Configuration
 
 | Environment Variable | Default | Description |
@@ -55,6 +119,27 @@ python app.py
 | `PORT` | `8000` | Server port |
 | `MODEL_NAME` | `KittenML/kitten-tts-mini-0.8` | Model to use |
 | `API_KEY` | (empty) | API key for authentication (optional) |
+
+### Using Configuration
+
+**Via `.env` file:**
+```bash
+cp .env.example .env
+# Edit .env with your settings
+```
+
+**Via environment variables:**
+```bash
+export API_KEY="my-secret-key"
+export PORT=8000
+```
+
+**Via Docker Compose:**
+```yaml
+environment:
+  - API_KEY=my-secret-key
+  - PORT=8000
+```
 
 ## 📖 API Usage
 
@@ -158,95 +243,33 @@ const audio = new Audio(url);
 audio.play();
 ```
 
-## 🐳 Publishing Docker Image
-
-### Step 1: Build the Docker Image
-
-```bash
-# Build locally first to test
-docker build -t kitten-tts:latest .
-```
-
-### Step 2: Login to Docker Hub
-
-```bash
-# Login to Docker Hub
-docker login
-
-# Or login to GitHub Container Registry
-docker login ghcr.io
-
-# Or login to Google Container Registry
-gcloud auth configure-docker
-```
-
-### Step 3: Tag the Image
-
-```bash
-# For Docker Hub
-docker tag kitten-tts:latest your-username/kitten-tts:latest
-docker tag kitten-tts:latest your-username/kitten-tts:0.8.0
-
-# For GitHub Container Registry
-docker tag kitten-tts:latest ghcr.io/your-username/kitten-tts:latest
-docker tag kitten-tts:latest ghcr.io/your-username/kitten-tts:0.8.0
-
-# For Google Container Registry
-docker tag kitten-tts:latest gcr.io/your-project/kitten-tts:latest
-```
-
-### Step 4: Push the Image
-
-```bash
-# Push to Docker Hub
-docker push your-username/kitten-tts:latest
-docker push your-username/kitten-tts:0.8.0
-
-# Push to GitHub Container Registry
-docker push ghcr.io/your-username/kitten-tts:latest
-docker push ghcr.io/your-username/kitten-tts:0.8.0
-
-# Push to Google Container Registry
-docker push gcr.io/your-project/kitten-tts:latest
-```
-
-### Step 5: Multi-Architecture Build (Optional)
-
-For supporting multiple architectures (amd64, arm64):
-
-```bash
-# Install buildx if not already installed
-docker buildx create --use
-
-# Build and push multi-arch image
-docker buildx build --platform linux/amd64,linux/arm64 \
-  -t your-username/kitten-tts:latest \
-  -t your-username/kitten-tts:0.8.0 \
-  --push .
-```
-
-### Step 6: Using Published Image
-
-```bash
-# Pull and run
-docker run -p 8000:8000 your-username/kitten-tts:latest
-
-# Or with Docker Compose
-# Update docker-compose.yml image field:
-# image: your-username/kitten-tts:latest
-```
-
 ## 📁 Project Structure
 
 ```
-├── app.py                 # Main FastAPI application
-├── requirements.txt       # Python dependencies
-├── Dockerfile            # Docker build configuration
-├── docker-compose.yml    # Docker Compose (no auth)
+kitten-tts/
+├── app.py                      # Main FastAPI application
+├── requirements.txt            # Python dependencies
+├── Dockerfile                  # Docker build configuration
+├── docker-compose.yml          # Docker Compose (no auth)
 ├── docker-compose.api-key.yml  # Docker Compose (with auth)
+├── start.sh                    # Smart startup script
+├── .env.example                # Environment template
+├── .dockerignore               # Docker ignore patterns
+│
 ├── static/
-│   └── index.html        # WebUI
-└── README.md             # This file
+│   └── index.html              # WebUI
+│
+├── examples/
+│   ├── usage_examples.py       # Python examples
+│   └── usage_examples.js       # JavaScript examples
+│
+├── test_api.py                 # API test suite
+│
+├── README.md               # This file
+├── QUICKSTART.md           # 5-minute quick start
+├── PUBLISHING_GUIDE.md     # Docker publishing guide
+├── ARCHITECTURE.md         # System architecture
+└── PROJECT_SUMMARY.md      # Project overview
 ```
 
 ## 🔒 Security Considerations
@@ -256,7 +279,7 @@ docker run -p 8000:8000 your-username/kitten-tts:latest
 3. **Rate Limiting**: Implement rate limiting for public deployments
 4. **Network**: Don't expose the container directly to the internet
 
-Example nginx configuration:
+### Example nginx Configuration
 
 ```nginx
 server {
@@ -270,6 +293,9 @@ server {
         proxy_pass http://localhost:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        
+        # Rate limiting
+        limit_req zone=one burst=10 nodelay;
     }
 }
 ```
@@ -310,18 +336,68 @@ This project follows the license of the underlying KittenTTS model. Please check
 
 ### Model Download Issues
 
-If the model fails to download on first run, ensure you have internet connectivity. The model will be cached in the Docker volume for subsequent runs.
+If the model fails to download on first run:
+- Ensure you have internet connectivity
+- The model will be cached in the Docker volume for subsequent runs
+- Manual cache location: `/root/.cache/huggingface`
 
 ### Memory Issues
 
-The model requires approximately 500MB-1GB of RAM. Ensure your container has sufficient memory allocated.
+The model requires approximately 500MB-1GB of RAM:
+```bash
+# Increase container memory
+docker update --memory 2g kitten-tts
+```
+
+### Port Already in Use
+
+```bash
+# Find what's using port 8000
+lsof -i :8000
+
+# Change port in .env
+PORT=8001
+```
 
 ### Audio Quality Issues
 
-Try different voices to find the best match for your use case. Each voice has unique characteristics.
+- Try different voices to find the best match
+- Ensure your audio player supports the output format
+- Try WAV format for highest quality
+
+### Rebuilding Docker Image After Changes
+
+If you modify code and need to rebuild:
+```bash
+# Stop current container
+docker-compose down
+
+# Rebuild image
+docker-compose build --no-cache
+
+# Start updated service
+docker-compose up -d
+
+# View logs to verify
+docker-compose logs -f
+```
 
 ## 📞 Support
 
-For issues related to the KittenTTS model itself, please refer to the [official repository](https://huggingface.co/KittenML/kitten-tts-mini-0.8).
+- **Model Issues**: [KittenTTS HuggingFace](https://huggingface.co/KittenML/kitten-tts-mini-0.8)
+- **API/Deployment Issues**: See documentation in this repository
+- **Examples**: Check `examples/` folder for usage code
 
-For issues with this wrapper/API, please open an issue on the project repository.
+## 📚 Additional Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [`QUICKSTART.md`](QUICKSTART.md) | Get started in 5 minutes |
+| [`PUBLISHING_GUIDE.md`](PUBLISHING_GUIDE.md) | Publish Docker images to registries |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | System architecture and design |
+| [`PROJECT_SUMMARY.md`](PROJECT_SUMMARY.md) | Complete project overview |
+| [`examples/`](examples/) | Code examples in Python and JavaScript |
+
+---
+
+**Happy Text-to-Speech! 🐱🎵**
